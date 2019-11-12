@@ -2,6 +2,7 @@ import click
 import numpy as np
 
 from reference import Solver
+from solver_DPLL import DPLL_SAT_solver
 
 LEN = 20
 
@@ -128,8 +129,10 @@ class SAT_solver:
 #               help='File with assignment rules configuration.', required=True)
 def hello(path):
     """tool for SAT"""
-    solver = SAT_solver(path)
-    solver.solve_BT()
+    # solver = SAT_solver(path)
+    # solver.solve_BT()
+
+    DPLL_SAT_solver(path)
 
     # s = Solver('uf20-91/uf20-02.cnf')
     # s.run()

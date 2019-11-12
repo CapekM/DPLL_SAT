@@ -5,7 +5,6 @@ import time
 # sys.setrecursionlimit(10000)
 
 LEN = 20
-STOP = False
 START = 0
 
 class Instance:
@@ -19,13 +18,60 @@ class Instance:
             if not self.fixed[i]:
                 return i
 
-    def fix_value(self, i, b):
+    def fix_value(self, i, b, name):
         """
         Will fix i-th variable on b
         """
         # print(f"\tFixing value {i} to {b}")
+        # print(f"{name}: {len(self.array)}")
         self.fixed[i] = True
         self.values[i] = b
+        i += 1
+        if not b:
+            i *= -1
+        for_removal = []
+        for clause in self.array:
+            if (i in clause):
+                # print(f"\t{clause} => []")
+                for_removal.append(clause)
+            if (-i in clause):
+                y = clause.copy()
+                clause.remove(-i)
+                # print(f"\t{y} => {clause}")
+                if (len(clause) == 0):
+                    # print(f"\tN: {np.array(self.fixed, dtype=np.uint8)}")
+                    return True
+        self.array = [e for e in self.array if e not in for_removal]
+        if (len(self.array) == 0):
+            duration = time.time() - START
+            print(f"\tIs SAT!")
+            print(f"\t- Formula:\t{np.array(self.values, dtype=np.uint8)}")
+            print(f"\t- Time: \t{duration}")
+            exit(0)
+        return False
+
+    # def fix_value(self, i, b, name):
+    #     """
+    #     Will fix i-th variable on b
+    #     """
+    #     self.fixed[i] = True
+    #     self.values[i] = b
+    #     i += 1
+    #     if not b:
+    #         i *= -1
+    #     for x in self.array:
+    #         if (i in x ):
+    #             self.array.remove(x)
+    #             if (len(self.array) == 0):
+    #                 duration = time.time() - START
+    #                 print(f"Found in time: {duration}")
+    #                 print(f"SAT for: {np.array(self.values, dtype=np.uint8)}")
+    #                 exit(0)
+    #         if (-i in x ):
+    #             x.remove(-i)
+    #             if (len(x) == 0):
+    #                 return True
+    #     return False
 
     def pure_variable(self):
         """
@@ -35,10 +81,9 @@ class Instance:
             if (self.fixed[i] == False):
                 if self.is_in(i+1):
                     if not self.is_in(-i-1):
-                        self.fix_value(i, True)
+                        return self.fix_value(i, True, "pure_variable")
                 elif self.is_in(-i-1):
-                        self.fix_value(i, False)
-                # delete occurrence if fixed
+                        return self.fix_value(i, False, "pure_variable")
 
     def is_in(self, literal):
         for clause in self.array:
@@ -54,42 +99,12 @@ class Instance:
         # arr = self.array.copy() # need copy?
         for literal in self.array:
             if (len(literal) == 1):
-                self.fix_value(abs(literal[0])-1, (literal[0] > 0))
-                self.remove_variable(literal[0])
+                return self.fix_value(abs(literal[0])-1, (literal[0] > 0), "fix_one_value_clause")
                 changed = True
                 break
         # self.array = arr
         if (changed):
             self.fix_one_value_clause()
-
-    def remove_variable(self, var):
-        for x in self.array:
-            if (var in x ):
-                self.array.remove(x)
-                if (len(self.array) == 0):
-                    print('NOT SAT')
-                    STOP = True
-            if (-var in x ):
-                x.remove(-var)
-                if (len(x) == 0):
-                    print('NOT SAT')
-                    STOP = True
-
-    def is_satisfiable(self):
-        if (len(self.array) == 0):
-            return
-        for clause in self.array:
-            clauses = []
-            for literal in clause:
-                # take negation of values
-                clauses.append(not self.values[abs(literal)-1] if literal > 0 else self.values[abs(literal)-1])
-            if (all(clauses)):
-                return
-        duration = time.time() - START
-        print(f"Found in time: {duration}")
-        print(f"Solveable for: {np.array(self.values, dtype=np.uint8)}")
-        global STOP
-        STOP = True
 
 class DPLL_SAT_solver:
     """
@@ -115,23 +130,32 @@ class DPLL_SAT_solver:
         global START
         START = time.time()
         self.solve_DPLL(Instance(arr))
+        duration = time.time() - START
+        print("\tNot SAT!")
+        print(f"\t- Time: {duration}")
 
     def solve_DPLL(self, problem):
-        problem.pure_variable()
-        problem.fix_one_value_clause()
-        problem.is_satisfiable()
-        if STOP:
+        if problem.pure_variable():
+            return
+        if problem.fix_one_value_clause():
             return
         self.fix_one_value(problem)
 
     def fix_one_value(self, problem):
         unfixed = problem.find_unfixed()
         if unfixed is not None:
-            problem2 = copy.deepcopy(problem)
+            length = len(problem.array)
+            problem0 = copy.deepcopy(problem)
+            problem1 = copy.deepcopy(problem)
 
-            problem.fix_value(unfixed, True)
-            self.solve_DPLL(problem)
+            if (not problem0.fix_value(unfixed, True, "DPLL T")):
+                # print("\tfirst")
+                # print(f"\t{np.array(problem.fixed, dtype=np.uint8)}")
+                # print(f"\t{np.array(problem0.fixed, dtype=np.uint8)}")
+                self.solve_DPLL(problem0)
 
-            problem2.fix_value(unfixed, False)
-            self.solve_DPLL(problem2)
-
+            if (not problem1.fix_value(unfixed, False, "DPLL F")):
+                # print("\tsecond")
+                # print(f"\t{np.array(problem.fixed, dtype=np.uint8)}")
+                # print(f"\t{np.array(problem1.fixed, dtype=np.uint8)}")
+                self.solve_DPLL(problem1)

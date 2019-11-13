@@ -1,15 +1,13 @@
 import numpy as np
 import copy
 import time
-# import sys
-# sys.setrecursionlimit(10000)
 
 LEN = 20
 START = 0
 
 class Instance:
     def __init__(self, arr):
-        self.array = arr # np.array(arr, dtype=int)
+        self.array = arr
         self.fixed = np.full(LEN, fill_value=False)
         self.values = np.full(LEN, fill_value=False)
 
@@ -22,7 +20,6 @@ class Instance:
         """
         Will fix i-th variable on b
         """
-        # print(f"\tFixing value {i} to {b}")
         # print(f"{name}: {len(self.array)}")
         self.fixed[i] = True
         self.values[i] = b
@@ -50,32 +47,9 @@ class Instance:
             exit(0)
         return False
 
-    # def fix_value(self, i, b, name):
-    #     """
-    #     Will fix i-th variable on b
-    #     """
-    #     self.fixed[i] = True
-    #     self.values[i] = b
-    #     i += 1
-    #     if not b:
-    #         i *= -1
-    #     for x in self.array:
-    #         if (i in x ):
-    #             self.array.remove(x)
-    #             if (len(self.array) == 0):
-    #                 duration = time.time() - START
-    #                 print(f"Found in time: {duration}")
-    #                 print(f"SAT for: {np.array(self.values, dtype=np.uint8)}")
-    #                 exit(0)
-    #         if (-i in x ):
-    #             x.remove(-i)
-    #             if (len(x) == 0):
-    #                 return True
-    #     return False
-
     def pure_variable(self):
         """
-        Check pure variables and set thems
+        Check pure variables and set them
         """
         for i in range(LEN):
             if (self.fixed[i] == False):
@@ -96,13 +70,11 @@ class Instance:
         If there are one literal clauses they will be set
         """
         changed = False
-        # arr = self.array.copy() # need copy?
         for literal in self.array:
             if (len(literal) == 1):
                 return self.fix_value(abs(literal[0])-1, (literal[0] > 0), "fix_one_value_clause")
                 changed = True
                 break
-        # self.array = arr
         if (changed):
             self.fix_one_value_clause()
 
@@ -135,8 +107,8 @@ class DPLL_SAT_solver:
         print(f"\t- Time: {duration}")
 
     def solve_DPLL(self, problem):
-        if problem.pure_variable():
-            return
+        # if problem.pure_variable():
+        #     return
         if problem.fix_one_value_clause():
             return
         self.fix_one_value(problem)
@@ -149,13 +121,7 @@ class DPLL_SAT_solver:
             problem1 = copy.deepcopy(problem)
 
             if (not problem0.fix_value(unfixed, True, "DPLL T")):
-                # print("\tfirst")
-                # print(f"\t{np.array(problem.fixed, dtype=np.uint8)}")
-                # print(f"\t{np.array(problem0.fixed, dtype=np.uint8)}")
                 self.solve_DPLL(problem0)
 
             if (not problem1.fix_value(unfixed, False, "DPLL F")):
-                # print("\tsecond")
-                # print(f"\t{np.array(problem.fixed, dtype=np.uint8)}")
-                # print(f"\t{np.array(problem1.fixed, dtype=np.uint8)}")
                 self.solve_DPLL(problem1)

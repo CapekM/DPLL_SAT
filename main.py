@@ -116,17 +116,8 @@ class SAT_solver:
         return True
 
 @click.command()
-# @click.argument('reposlug', type=click.STRING, callback=parse_reposlug)
-# @click.option('-s', '--strategy', default='dynamic', show_default=True,
-#               type=click.Choice(["dynamic", "greedy0", "greedy1", "fptas"]),
-#               help='How solve problems.')
 @click.option('-p', '--path', type=click.File('r'), default='uf20-91/uf20-01.cnf', # callback=get_token,
               help='File with problems.', required=True)
-# @click.option('--sol', type=click.File('r'), default='NK/NK4_sol.dat')
-# @click.option('--dry-run', '-d', is_flag=True,
-#               help='Run without making any changes.')
-# @click.option('-r', '--config-rules', type=click.File('r'), callback=get_rules,
-#               help='File with assignment rules configuration.', required=True)
 def hello(path):
     """tool for SAT"""
     # solver = SAT_solver(path)
